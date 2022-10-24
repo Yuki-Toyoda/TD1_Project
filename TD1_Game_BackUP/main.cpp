@@ -524,7 +524,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 #pragma region 敵
 
 	const int kMaxEnemy = 250;
-
 	chara enemy[kMaxEnemy];
 	Distance e2e[kMaxEnemy];
 	Distance ef2e[kMaxEnemy];

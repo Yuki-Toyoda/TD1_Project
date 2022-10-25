@@ -125,6 +125,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 #pragma endregion
 
+#pragma region ゲージ
+
 	typedef struct Gage {
 
 		vector2 translate;
@@ -132,6 +134,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		unsigned int color;
 
 	};
+
+#pragma endregion
 
 #pragma region 矩形
 	typedef struct Quad {
@@ -194,9 +198,51 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 #pragma region 変数
 
+#pragma region スクリーン
+
+	int fullScreen = false;
+
+#pragma endregion
+
 #pragma region ゲーム
 
-	int gameTimer = 3600;
+	int gameTimer = 1800;
+
+	int flame = 0;
+
+	int gameMinutesTimer = 0;
+	int gameSecondsTimer = 0;
+
+	int recGameMinutesTimer = 0;
+	int recGameSecondsTimer = 0;
+
+	int numberSize = 256;
+	int numberSpace = numberSize / 2;
+
+	int eachSec[2] = { 0, 0 };
+
+	int numberGraph[11];
+
+	numberGraph[0] = Novice::LoadTexture("./resources/graph/numbers/0.png");
+	numberGraph[1] = Novice::LoadTexture("./resources/graph/numbers/1.png");
+	numberGraph[2] = Novice::LoadTexture("./resources/graph/numbers/2.png");
+	numberGraph[3] = Novice::LoadTexture("./resources/graph/numbers/3.png");
+	numberGraph[4] = Novice::LoadTexture("./resources/graph/numbers/4.png");
+	numberGraph[5] = Novice::LoadTexture("./resources/graph/numbers/5.png");
+	numberGraph[6] = Novice::LoadTexture("./resources/graph/numbers/6.png");
+	numberGraph[7] = Novice::LoadTexture("./resources/graph/numbers/7.png");
+	numberGraph[8] = Novice::LoadTexture("./resources/graph/numbers/8.png");
+	numberGraph[9] = Novice::LoadTexture("./resources/graph/numbers/9.png");
+
+	int DotGraph = Novice::LoadTexture("./resources/graph/numbers/Dot.png");
+	int XGraph = Novice::LoadTexture("./resources/graph/numbers/x.png");
+
+	vector2 secondsTimerPosOrigin = {
+
+		kWindowWidth / 2,
+		512
+
+	};
 
 	int tutorialStart = false;
 	int tutorialFinish = false;
@@ -237,20 +283,48 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 #pragma region スコア
 
 	int score = 0;
+	int tempScore = 0;
+	int eachScore[7] = {0};
+
+	vector2 scoreUIPosOrigin = { 0, 0 };
+
+	int scoreNumberSize = 96;
+	int scoreNumberSpace = scoreNumberSize / 2;
 
 	int addScore = 100;
 	int defAddScore = 100;
-	float scoreMagnification = 1.0f;
 
 	int combo = 0;
+	int tempCombo = 0;
+	int eachCombo[3] = { 0 };
+
+	vector2 comboUIPosOrigin = { 0, 0 };
+
+	int comboNumberSize = 256;
+	int comboNumberSpace = comboNumberSize / 2;
+
 	int tenCombo = 0;
 	int startCombo = 10;
 
-	float comboMagnification = 1.0f;
+	Gage comboReceptionGage = {
+
+		0.0f, 0.0f,
+		0.0f, 0.0f,
+		WHITE
+
+	};
 
 	float comboReceptionTime = 120.0f;
 	float defComboReceptionTime = 120.0f;
 
+	vector2 MagnificationUIPosOrigin = { 0, 0 };
+	float scoreMagnification = 1.0f;
+	float comboMagnification = 1.0f;
+	int tempMagnification = 0;
+	int eachMagnification[4] = { 0 };
+
+	int MagnificationNumberSize = 64;
+	int MagnificationNumberSpace = MagnificationNumberSize / 2;
 
 #pragma endregion
 
@@ -348,6 +422,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	};
 
+	int flashGraph = Novice::LoadTexture("./resources/graph/player/flush.png");
+
+	int playFlashEffect = false;
+	int flashEffectFrame = 0;
+
 	int chargeGageGraph = Novice::LoadTexture("./resources/graph/player/ChargeGage.png");
 
 	Gage chargeGage{
@@ -427,9 +506,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	const int maxEnhancedAttack = 5;
 
+	int shockWaveGraph = Novice::LoadTexture("./resources/graph/player/shockwave.png");
+
 	vector2 shockOrigin[maxEnhancedAttack];
 	float shockRadius[maxEnhancedAttack];
 	float maxShockRadius = 500;
+
+	float shockTime[maxEnhancedAttack] = {0};
 
 	int canEnhancedAttack = false;
 	int doEnhancedAttack = false;
@@ -443,8 +526,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		isEnhancedAttack[i] = false;
 
 	}
-
-
 
 #pragma endregion
 #pragma region 味方
@@ -497,6 +578,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		0.0f, 0.0f
 
 	};
+
+	int decoyHPGraph = Novice::LoadTexture("./resources/graph/decoy/HP.png");
 
 	Gage decoyHPGage = {
 
@@ -751,6 +834,17 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	}
 
 	int energyAmount = 0;
+	int maxEnergyAmount = 1000;
+
+	int energyIconGraph = Novice::LoadTexture("./resources/graph/energy/EnergyIcon.png");
+
+	Gage energyAmountGage = {
+
+		0, 0,
+		0, 0,
+		0x90ee90FF
+
+	};
 
 #pragma endregion
 
@@ -876,8 +970,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	int White1x1 = Novice::LoadTexture("white1x1.png");
 
-	int fullScreen = false;
-
 #pragma endregion
 
 	/*********************************
@@ -945,13 +1037,187 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		#pragma endregion
 
+		#pragma region タイマーUI
+
+			gameMinutesTimer = gameTimer / 3600;
+			recGameMinutesTimer = gameMinutesTimer;
+
+			gameSecondsTimer = (gameTimer % 3600) / 60;
+			recGameSecondsTimer = gameSecondsTimer;
+
+			secondsTimerPosOrigin.x = player.translate.x - numberSize / 4;
+			secondsTimerPosOrigin.y = player.translate.y - player.radius * 3.0f;
+
+			for (int i = 0; i <= 1; i++) {
+
+				if (i == 0) {
+
+					eachSec[i] = recGameSecondsTimer / 10;
+					recGameSecondsTimer = recGameSecondsTimer % 10;
+
+				}
+				if (i == 1) {
+
+					eachSec[i] = recGameSecondsTimer;
+
+				}
+
+			}
+
+		#pragma endregion
+		#pragma region スコアUI
+
+			scoreUIPosOrigin.x = player.translate.x + numberSize - numberSize * 1.55;
+			scoreUIPosOrigin.y = player.translate.y + player.radius * 2.0f;
+
+			for (int i = 0; i < 7; i++) {
+
+				if (i == 0) {
+					tempScore = score;
+					eachScore[i] = tempScore / 1000000;
+					tempScore = tempScore % 10000000;
+				}
+				if (i == 1) {
+					eachScore[i] = tempScore / 100000;
+					tempScore = tempScore % 100000;
+				}
+				if (i == 2) {
+					eachScore[i] = tempScore / 10000;
+					tempScore = tempScore % 10000;
+				}
+				if (i == 3) {
+					eachScore[i] = tempScore / 1000;
+					tempScore = tempScore % 1000;
+				}
+				if (i == 4) {
+					eachScore[i] = tempScore / 100;
+					tempScore = tempScore % 100;
+				}
+				if (i == 5) {
+					eachScore[i] = tempScore / 10;
+					tempScore = tempScore % 10;
+				}
+				if (i == 6) {
+					eachScore[i] = tempScore / 10;
+				}
+
+			}
+
+		#pragma endregion
+		#pragma region コンボUI
+
+			comboUIPosOrigin.x = player.translate.x - numberSize / 2.0f;
+			comboUIPosOrigin.y = player.translate.y + player.radius * 3.25f;
+
+			for (int i = 0; i < 3; i++) {
+
+				if (i == 0) {
+					tempCombo = combo;
+					eachCombo[i] = tempCombo / 100;
+					tempCombo = tempCombo % 100;
+				}
+				if (i == 1) {
+					eachCombo[i] = tempCombo / 10;
+					tempCombo = tempCombo % 10;
+				}
+				if (i == 2) {
+					eachCombo[i] = tempCombo;
+				}
+
+			}
+			
+			comboReceptionGage.length.x = comboReceptionTime * 1.5f;
+			comboReceptionGage.length.y = 3.5f;
+			comboReceptionGage.translate.x = player.translate.x;
+			comboReceptionGage.translate.y = player.translate.y + 310;
+
+			MagnificationUIPosOrigin.x = player.translate.x + MagnificationNumberSpace * 7.5f;
+			MagnificationUIPosOrigin.y = player.translate.y + player.radius * 1.9f;
+
+			for (int i = 0; i < 4; i++) {
+
+				if (i == 0) {
+
+					if (9.99f > comboMagnification * scoreMagnification) {
+						tempMagnification = (comboMagnification * scoreMagnification) * 100;
+					}
+					else {
+
+						tempMagnification = 999;
+
+					}
+					eachMagnification[i] = tempMagnification / 100;
+					tempMagnification = tempMagnification % 100;
+				}
+				if (i == 1) {
+					
+					eachMagnification[i] = DotGraph;
+
+				}
+				if (i == 2) {
+					eachMagnification[i] = tempMagnification / 10;
+					tempMagnification = tempMagnification % 10;
+				}
+				if (i == 3) {
+					eachMagnification[i] = tempMagnification;
+				}
+
+			}
+
+		#pragma endregion
+
+		#pragma region デコイHPゲージ
+
+			decoyHPGage.translate.x = player.translate.x - 230;
+			decoyHPGage.translate.y = player.translate.y - 250;
+
+			if (decoyHPGage.length.x > 0) {
+
+				decoyHPGage.length.x = ally.HP;
+
+			}
+			else {
+
+				decoyHPGage.length.x = 0;
+
+			}
+
+#pragma endregion
+		#pragma region エネルギーゲージ
+
+			energyAmountGage.translate.x = player.translate.x + 500;
+			energyAmountGage.translate.y = player.translate.y - 300;
+
+			if (energyAmountGage.length.y > 0) {
+
+				energyAmountGage.length.y = -1;
+
+			}
+			else {
+
+				energyAmountGage.length.y = -energyAmount / 1.5f;
+
+			}
+
+		#pragma endregion
+
 		#pragma region ゲーム中
 
 			if (gameStart == true && gameFinish == false) {
 
 			#pragma region ゲーム時間
+				
+				if (gameTimer > 0) {
 
-				gameTimer--;
+					gameTimer--;
+
+				}
+				else {
+
+					gameTimer = 0;
+
+				}
+
 				spawnRushEnemyTimer--;
 
 			#pragma endregion
@@ -1101,6 +1367,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 						if (putDecoy == true) {
 
 							canEnhancedAttack = true;
+							playFlashEffect = true;
 
 						}
 						chargePower = maxPower;
@@ -1224,9 +1491,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 						}
 						else {
 
-							shockRadius[i] = 0.0f;
-							isEnhancedAttack[i] = false;
+							shockRadius[i] = 0;
 
+							shockTime[i] = 0;
+
+							isEnhancedAttack[i] = false;
 						}
 
 					}
@@ -1236,9 +1505,31 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 							shockOrigin[i] = player.translate;
 
+							playFlashEffect = false;
+							flashEffectFrame = 0;
 							isEnhancedAttack[i] = true;
 							doEnhancedAttack = false;
 						}
+
+					}
+
+				}
+
+				if (playFlashEffect == true) {
+
+					if (flashEffectFrame < 4) {
+
+						if (flame > 3) {
+
+							flashEffectFrame++;
+							flame = 0;
+						}
+						flame++;
+
+					}
+					else {
+
+						flashEffectFrame = 0;
 
 					}
 
@@ -1326,7 +1617,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 				if (tenCombo >= startCombo) {
 
-					comboMagnification += 0.1f;
+					if (comboMagnification < 9.99f) {
+
+						comboMagnification += 0.1f;
+
+					}
+					else {
+
+						comboMagnification = 9.99f;
+
+					}
 					tenCombo = 0;
 
 				}
@@ -1372,15 +1672,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 					enhanceSpeed = true;
 
 				}
-				#pragma endregion
-
-				#pragma region デコイHPゲージ
-
-				decoyHPGage.translate.x = decoyRotate.q1.x;
-				decoyHPGage.translate.y = decoyRotate.q1.y;
-
-				decoyHPGage.length.y = -ally.HP / 15.63;
-
 				#pragma endregion
 
 				#pragma region デコイの回転処理
@@ -1443,7 +1734,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 					if (putDecoy == true) {
 
-						if (canCollectDecoy == true) {
+						if (canCollectDecoy == true && isRepairing == false) {
 
 							putDecoy = false;
 							repairComplete = false;
@@ -1479,7 +1770,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 					}
 					else {
 
-						//ally.HP -= 2;
+						ally.HP -= 2;
 
 					}
 
@@ -1843,11 +2134,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 							enemy[i].translate.x = 0.0f;
 							enemy[i].translate.y = 0.0f;
 
-							combo++;
-							tenCombo++;
 							comboReceptionTime = defComboReceptionTime;
 
 							score += addScore * comboMagnification * scoreMagnification;
+
+							if (combo < 999) {
+
+								combo++;
+								tenCombo++;
+
+							}
 
 							nowSpawnCounter--;
 
@@ -1920,12 +2216,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 						if (repairComplete == true) {
 
-							canCollectDecoy = true;
+							isRepairing = false;
 
 						}
 						else {
 
 							canCollectDecoy = false;
+							isRepairing = true;
 
 						}
 
@@ -1967,8 +2264,23 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 #pragma endregion
 
-
 				#pragma region 時間がたつごとにエネルギー減少
+
+				if (Machine.HP >= 500) {
+
+					scoreMagnification = 1.0f;
+
+				}
+				if (Machine.HP < 500) {
+					
+					scoreMagnification = 0.5f;
+
+				}
+				else if (Machine.HP <= 0) {
+
+					scoreMagnification = 0.1f;
+
+				}
 
 				if (Machine.HP <= 0) {
 
@@ -1984,7 +2296,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 				#pragma endregion
 
 #pragma endregion
-
 			#pragma region エネルギー
 
 				for (int i = 0; i < kMaxEnergy; i++) {
@@ -2012,7 +2323,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 						{
 							if (en2p[i].length <= energy[i].radius / 2 + player.radius / 2) {
 
-								energyAmount++;
+								if (energyAmount < maxEnergyAmount) {
+
+									energyAmount++;
+
+								}
+								else {
+
+									energyAmount = maxEnergyAmount; 
+
+								}
 								followPlayer[i] = false;
 								energy[i].speed = energy[i].defSpeed;
 								energy[i].isAlive = false;
@@ -2020,20 +2340,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 							}
 						}
 
-
-#pragma endregion
-						#pragma region エフェクトとの衝突判定
-
-						/*for (int j = 0; j < afterimageMax; j++) {
-							if (afterimage[j].isActive == true && isAttacking == true) {
-								ef2en[j].distance.x = energy[i].translate.x - afterimage[j].translate.x;
-								ef2en[j].distance.y = energy[i].translate.y - afterimage[j].translate.y;
-								ef2en[j].length = sqrt(pow(ef2en[j].distance.x, 2) + pow(ef2en[j].distance.y, 2));
-								if (ef2en[j].length <= collectRange[i] / 2 + afterimage[j].radius / 2) {
-									followPlayer[i] = true;
-								}
-							}
-						}*/
 
 #pragma endregion
 
@@ -2172,7 +2478,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 #pragma endregion
 
-
 			break;
 		case RESULT:
 
@@ -2285,8 +2590,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 					BLACK
 
 				);
-
-
 			}
 
 #pragma endregion
@@ -2331,6 +2634,214 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			);
 
 #pragma endregion
+
+			#pragma region タイマー処理
+			for (int i = 0; i <= 1; i++) {
+				Novice::DrawQuad(
+
+					worldPosOrigin.x + secondsTimerPosOrigin.x - numberSize / 2 - scrool.x + (numberSpace * i),
+					worldPosOrigin.y - secondsTimerPosOrigin.y - numberSize / 2 + scrool.y,
+
+					worldPosOrigin.x + secondsTimerPosOrigin.x + numberSize / 2 - scrool.x + (numberSpace * i),
+					worldPosOrigin.y - secondsTimerPosOrigin.y - numberSize / 2 + scrool.y,
+
+					worldPosOrigin.x + secondsTimerPosOrigin.x - numberSize / 2 - scrool.x + (numberSpace * i),
+					worldPosOrigin.y - secondsTimerPosOrigin.y + numberSize / 2 + scrool.y,
+
+					worldPosOrigin.x + secondsTimerPosOrigin.x + numberSize / 2 - scrool.x + (numberSpace * i),
+					worldPosOrigin.y - secondsTimerPosOrigin.y + numberSize / 2 + scrool.y,
+
+					0,
+					0,
+
+					512,
+					512,
+
+					numberGraph[eachSec[i]],
+					WHITE
+
+				);
+			}
+#pragma endregion
+
+			#pragma region スコア
+			for (int i = 0; i < 7; i++) {
+				Novice::DrawQuad(
+
+					worldPosOrigin.x + scoreUIPosOrigin.x - scoreNumberSize / 2 - scrool.x + (scoreNumberSpace * i),
+					worldPosOrigin.y - scoreUIPosOrigin.y - scoreNumberSize / 2 + scrool.y,
+
+					worldPosOrigin.x + scoreUIPosOrigin.x + scoreNumberSize / 2 - scrool.x + (scoreNumberSpace * i),
+					worldPosOrigin.y - scoreUIPosOrigin.y - scoreNumberSize / 2 + scrool.y,
+
+					worldPosOrigin.x + scoreUIPosOrigin.x - scoreNumberSize / 2 - scrool.x + (scoreNumberSpace * i),
+					worldPosOrigin.y - scoreUIPosOrigin.y + scoreNumberSize / 2 + scrool.y,
+
+					worldPosOrigin.x + scoreUIPosOrigin.x + scoreNumberSize / 2 - scrool.x + (scoreNumberSpace * i),
+					worldPosOrigin.y - scoreUIPosOrigin.y + scoreNumberSize / 2 + scrool.y,
+
+					0,
+					0,
+
+					512,
+					512,
+
+					numberGraph[eachScore[i]],
+					WHITE
+
+				);
+			}
+
+#pragma endregion
+
+			#pragma region コンボ
+
+			for (int i = 0; i < 3; i++) {
+
+				Novice::DrawQuad(
+
+					worldPosOrigin.x + comboUIPosOrigin.x - comboNumberSize / 2 - scrool.x + (comboNumberSpace * i),
+					worldPosOrigin.y - comboUIPosOrigin.y - comboNumberSize / 2 + scrool.y,
+
+					worldPosOrigin.x + comboUIPosOrigin.x + comboNumberSize / 2 - scrool.x + (comboNumberSpace * i),
+					worldPosOrigin.y - comboUIPosOrigin.y - comboNumberSize / 2 + scrool.y,
+
+					worldPosOrigin.x + comboUIPosOrigin.x - comboNumberSize / 2 - scrool.x + (comboNumberSpace * i),
+					worldPosOrigin.y - comboUIPosOrigin.y + comboNumberSize / 2 + scrool.y,
+
+					worldPosOrigin.x + comboUIPosOrigin.x + comboNumberSize / 2 - scrool.x + (comboNumberSpace * i),
+					worldPosOrigin.y - comboUIPosOrigin.y + comboNumberSize / 2 + scrool.y,
+
+					0,
+					0,
+
+					512,
+					512,
+
+					numberGraph[eachCombo[i]],
+					WHITE
+
+				);
+			}
+
+#pragma endregion
+
+			#pragma region コンボ受付時間
+
+			Novice::DrawQuad(
+
+				worldPosOrigin.x + comboReceptionGage.translate.x - comboReceptionGage.length.x - scrool.x,
+				worldPosOrigin.y - comboReceptionGage.translate.y - comboReceptionGage.length.y + scrool.y,
+
+				worldPosOrigin.x + comboReceptionGage.translate.x + comboReceptionGage.length.x - scrool.x,
+				worldPosOrigin.y - comboReceptionGage.translate.y - comboReceptionGage.length.y + scrool.y,
+
+				worldPosOrigin.x + comboReceptionGage.translate.x - comboReceptionGage.length.x - scrool.x,
+				worldPosOrigin.y - comboReceptionGage.translate.y + comboReceptionGage.length.y + scrool.y,
+
+				worldPosOrigin.x + comboReceptionGage.translate.x + comboReceptionGage.length.x - scrool.x,
+				worldPosOrigin.y - comboReceptionGage.translate.y + comboReceptionGage.length.y + scrool.y,
+
+				0, 0,
+				1, 1,
+
+				White1x1,
+				comboReceptionGage.color
+
+			);
+
+
+			#pragma endregion
+
+			#pragma region 倍率
+
+			Novice::DrawQuad(
+
+				worldPosOrigin.x + MagnificationUIPosOrigin.x - MagnificationNumberSize / 2 - scrool.x - MagnificationNumberSize / 1.75f,
+				worldPosOrigin.y - MagnificationUIPosOrigin.y - MagnificationNumberSize / 2 + scrool.y - 5,
+
+				worldPosOrigin.x + MagnificationUIPosOrigin.x + MagnificationNumberSize / 2 - scrool.x - MagnificationNumberSize / 1.75f,
+				worldPosOrigin.y - MagnificationUIPosOrigin.y - MagnificationNumberSize / 2 + scrool.y - 5,
+
+				worldPosOrigin.x + MagnificationUIPosOrigin.x - MagnificationNumberSize / 2 - scrool.x - MagnificationNumberSize / 1.75f,
+				worldPosOrigin.y - MagnificationUIPosOrigin.y + MagnificationNumberSize / 2 + scrool.y - 5,
+
+				worldPosOrigin.x + MagnificationUIPosOrigin.x + MagnificationNumberSize / 2 - scrool.x - MagnificationNumberSize / 1.75f,
+				worldPosOrigin.y - MagnificationUIPosOrigin.y + MagnificationNumberSize / 2 + scrool.y - 5,
+
+				0,
+				0,
+
+				512,
+				512,
+
+				XGraph,
+				WHITE
+
+			);
+
+			for (int i = 0; i < 4; i++) {
+
+				if (eachMagnification[i] == DotGraph) {
+
+					Novice::DrawQuad(
+
+						worldPosOrigin.x + MagnificationUIPosOrigin.x - MagnificationNumberSize / 2 - scrool.x + (MagnificationNumberSpace * i),
+						worldPosOrigin.y - MagnificationUIPosOrigin.y - MagnificationNumberSize / 2 + scrool.y,
+
+						worldPosOrigin.x + MagnificationUIPosOrigin.x + MagnificationNumberSize / 2 - scrool.x + (MagnificationNumberSpace * i),
+						worldPosOrigin.y - MagnificationUIPosOrigin.y - MagnificationNumberSize / 2 + scrool.y,
+
+						worldPosOrigin.x + MagnificationUIPosOrigin.x - MagnificationNumberSize / 2 - scrool.x + (MagnificationNumberSpace * i),
+						worldPosOrigin.y - MagnificationUIPosOrigin.y + MagnificationNumberSize / 2 + scrool.y,
+
+						worldPosOrigin.x + MagnificationUIPosOrigin.x + MagnificationNumberSize / 2 - scrool.x + (MagnificationNumberSpace * i),
+						worldPosOrigin.y - MagnificationUIPosOrigin.y + MagnificationNumberSize / 2 + scrool.y,
+
+						0,
+						0,
+
+						512,
+						512,
+
+						DotGraph,
+						WHITE
+
+					);
+
+				}
+				else {
+
+					Novice::DrawQuad(
+
+						worldPosOrigin.x + MagnificationUIPosOrigin.x - MagnificationNumberSize / 2 - scrool.x + (MagnificationNumberSpace * i),
+						worldPosOrigin.y - MagnificationUIPosOrigin.y - MagnificationNumberSize / 2 + scrool.y,
+
+						worldPosOrigin.x + MagnificationUIPosOrigin.x + MagnificationNumberSize / 2 - scrool.x + (MagnificationNumberSpace * i),
+						worldPosOrigin.y - MagnificationUIPosOrigin.y - MagnificationNumberSize / 2 + scrool.y,
+
+						worldPosOrigin.x + MagnificationUIPosOrigin.x - MagnificationNumberSize / 2 - scrool.x + (MagnificationNumberSpace * i),
+						worldPosOrigin.y - MagnificationUIPosOrigin.y + MagnificationNumberSize / 2 + scrool.y,
+
+						worldPosOrigin.x + MagnificationUIPosOrigin.x + MagnificationNumberSize / 2 - scrool.x + (MagnificationNumberSpace * i),
+						worldPosOrigin.y - MagnificationUIPosOrigin.y + MagnificationNumberSize / 2 + scrool.y,
+
+						0,
+						0,
+
+						512,
+						512,
+
+						numberGraph[eachMagnification[i]],
+						WHITE
+
+					);
+
+				}
+				
+			}
+
+			#pragma endregion
 
 			#pragma region 敵描画
 
@@ -2629,6 +3140,31 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 #pragma endregion
 			#pragma region プレイヤー描画
 
+			for (int i = 0; i < maxEnhancedAttack; i++) {
+
+				Novice::DrawQuad(
+
+					worldPosOrigin.x + shockOrigin[i].x - shockRadius[i] - scrool.x,
+					worldPosOrigin.y - shockOrigin[i].y - shockRadius[i] + scrool.y,
+
+					worldPosOrigin.x + shockOrigin[i].x + shockRadius[i] - scrool.x,
+					worldPosOrigin.y - shockOrigin[i].y - shockRadius[i] + scrool.y,
+
+					worldPosOrigin.x + shockOrigin[i].x - shockRadius[i] - scrool.x,
+					worldPosOrigin.y - shockOrigin[i].y + shockRadius[i] + scrool.y,
+
+					worldPosOrigin.x + shockOrigin[i].x + shockRadius[i] - scrool.x,
+					worldPosOrigin.y - shockOrigin[i].y + shockRadius[i] + scrool.y,
+
+					0, 0,
+					512, 512,
+
+					shockWaveGraph,
+					WHITE
+				);
+
+			}
+
 			/******** プレイヤー描画 **********/
 			Novice::DrawQuad(
 
@@ -2680,17 +3216,30 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 			);
 
-			for (int i = 0; i < maxEnhancedAttack; i++) {
+			if (playFlashEffect == true) {
 
-				Novice::DrawEllipse(
+				Novice::DrawQuad(
 
-					worldPosOrigin.x + shockOrigin[i].x - scrool.x,
-					worldPosOrigin.y - shockOrigin[i].y + scrool.y,
-					shockRadius[i],
-					shockRadius[i],
-					0.0f,
-					RED,
-					kFillModeWireFrame
+					worldPosOrigin.x + player.translate.x - 64 - scrool.x,
+					worldPosOrigin.y - player.translate.y - 64 + scrool.y,
+
+					worldPosOrigin.x + player.translate.x + 64 - scrool.x,
+					worldPosOrigin.y - player.translate.y - 64 + scrool.y,
+
+					worldPosOrigin.x + player.translate.x - 64 - scrool.x,
+					worldPosOrigin.y - player.translate.y + 64 + scrool.y,
+
+					worldPosOrigin.x + player.translate.x + 64 - scrool.x,
+					worldPosOrigin.y - player.translate.y + 64 + scrool.y,
+
+					128 * flashEffectFrame,
+					0,
+
+					128,
+					128,
+
+					flashGraph,
+					WHITE
 
 				);
 
@@ -2728,8 +3277,73 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 			}
 
-			#pragma endregion
+			Novice::DrawBox(
 
+				worldPosOrigin.x + decoyHPGage.translate.x - scrool.x,
+				worldPosOrigin.y - decoyHPGage.translate.y + scrool.y,
+				decoyHPGage.length.x,
+				10,
+				0.0f,
+				decoyHPGage.color,
+				kFillModeSolid
+
+			);
+
+			Novice::DrawQuad(
+
+				worldPosOrigin.x + decoyHPGage.translate.x - 16 - scrool.x - 30,
+				worldPosOrigin.y - decoyHPGage.translate.y - 16 + scrool.y + 5,
+
+				worldPosOrigin.x + decoyHPGage.translate.x + 16 - scrool.x - 30,
+				worldPosOrigin.y - decoyHPGage.translate.y - 16 + scrool.y + 5,
+
+				worldPosOrigin.x + decoyHPGage.translate.x - 16 - scrool.x - 30,
+				worldPosOrigin.y - decoyHPGage.translate.y + 16 + scrool.y + 5,
+
+				worldPosOrigin.x + decoyHPGage.translate.x + 16 - scrool.x - 30,
+				worldPosOrigin.y - decoyHPGage.translate.y + 16 + scrool.y + 5,
+
+				0, 0,
+				64, 64,
+				decoyHPGraph,
+				WHITE
+
+			);
+
+			Novice::DrawBox(
+
+				worldPosOrigin.x + energyAmountGage.translate.x - scrool.x,
+				worldPosOrigin.y - energyAmountGage.translate.y + scrool.y,
+				20,
+				energyAmountGage.length.y,
+				0.0f,
+				energyAmountGage.color,
+				kFillModeSolid
+
+			);
+
+			Novice::DrawQuad(
+
+				worldPosOrigin.x + energyAmountGage.translate.x - 16 - scrool.x + 10,
+				worldPosOrigin.y - energyAmountGage.translate.y - 16 + scrool.y + 20,
+
+				worldPosOrigin.x + energyAmountGage.translate.x + 16 - scrool.x + 10,
+				worldPosOrigin.y - energyAmountGage.translate.y - 16 + scrool.y + 20,
+
+				worldPosOrigin.x + energyAmountGage.translate.x - 16 - scrool.x + 10,
+				worldPosOrigin.y - energyAmountGage.translate.y + 16 + scrool.y + 20,
+
+				worldPosOrigin.x + energyAmountGage.translate.x + 16 - scrool.x + 10,
+				worldPosOrigin.y - energyAmountGage.translate.y + 16 + scrool.y + 20,
+
+				0, 0,
+				64, 64,
+				energyIconGraph,
+				WHITE
+
+			);
+
+			#pragma endregion
 			break;
 		case RESULT:
 
@@ -2741,11 +3355,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 #pragma region Debug描画
 
 		/******** プレイヤーデバック描画 **********/
-
-		//座標
-		/*Novice::ScreenPrintf(0, 10, "Px : %4.2f Py : %4.2f", player.translate.x, player.translate.y);
-		Novice::ScreenPrintf(0, 30, "combo : %d", combo);
-		Novice::ScreenPrintf(0, 50, "MHP : %d", Machine.HP);*/
+		
 
 #pragma endregion
 

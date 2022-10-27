@@ -18,7 +18,7 @@
 =================================*/
 
 /******** ウィンドウ名の指定 **********/
-const char kWindowTitle[] = "LC1A_16_トヨダユウキ_TD1_課題";
+const char kWindowTitle[] = "CRUSH!!";
 
 /******** ウィンドウサイズの指定 **********/
 const int kWindowWidth = 1920; //x
@@ -222,12 +222,23 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	unsigned int currentFadeAlpha = 0xFF;
 	int fadeIn = true;
 
-	unsigned int currentBlackOutAlpha = 0xFF;
+	unsigned int currentBlackOutAlpha = 0x00;
 	int blackout = false;
+
+	unsigned int currentAlpha = 0xFF;
+	int Fade = true;
 
 #pragma endregion
 
 #pragma region ゲーム
+
+	int clockGraph = Novice::LoadTexture("./resources/graph/UI/clock.png");
+	int directionUIGraph = Novice::LoadTexture("./resources/graph/UI/directionUI.png");
+	int AttackUIGraph = Novice::LoadTexture("./resources/graph/UI/AttackUI.png");
+	int PutDecoyUIGraph = Novice::LoadTexture("./resources/graph/UI/PutDecoyUI.png");
+
+	int tutorialUIGraph = Novice::LoadTexture("./resources/graph/UI/tutorialUI.png");
+	int resultUIGraph = Novice::LoadTexture("./resources/graph/UI/resultButtonUI.png");
 
 	int gameTimer = 3600;
 
@@ -282,35 +293,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ENHANCEDATTACK,
 		EATTACK,
 		MACHINEHP,
+		MACHINESCORE,
 		MACHINEREPAIR
 
 	};
 
-	int tutorial = MOVE;
+	const int kMaxTutorial = 15;
 
-	int tutorialStart = false;
-	int tutorialFinish = false;
-
-	int nextTutorial = false;
-
-	int tutorialMove = false;
-	int tutorialAngle = false;
-	int tutorialCharge = false;
-	int endTutorialMove = false;
-
-	int tutorialDecoy = false;
-	int tutorialPutDecoy = false;
-	int tutorialCollectDecoy = false;
-	int endTutorialDecoy = false;
-
-	int tutorialMachine = false;
-	int tutorialMachineHP = false;
-	int endTutorialMachine = false;
-
-	int gameStart = false;
-	int gameFinish = false;
-
-	int tutorialGraph[14];
+	int tutorialGraph[kMaxTutorial];
 
 	tutorialGraph[0] = Novice::LoadTexture("./resources/graph/tutorial/1_Guide_Move.png");
 	tutorialGraph[1] = Novice::LoadTexture("./resources/graph/tutorial/2_Guide_Direction.png");
@@ -325,7 +315,62 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	tutorialGraph[10] = Novice::LoadTexture("./resources/graph/tutorial/11_Guide_EnhancedAttack.png");
 	tutorialGraph[11] = Novice::LoadTexture("./resources/graph/tutorial/12_Guide_EAttck.png");
 	tutorialGraph[12] = Novice::LoadTexture("./resources/graph/tutorial/13_guide_machinehp.png");
-	tutorialGraph[13] = Novice::LoadTexture("./resources/graph/tutorial/14_guide_machinerepair.png");
+	tutorialGraph[13] = Novice::LoadTexture("./resources/graph/tutorial/14_Guide_MachineScore.png");
+	tutorialGraph[14] = Novice::LoadTexture("./resources/graph/tutorial/15_guide_machinerepair.png");
+
+	int tutorialImageGraph[kMaxTutorial];
+
+	tutorialImageGraph[0] = Novice::LoadTexture("./resources/graph/tutorial/1_Image_Move.png");
+	tutorialImageGraph[1] = Novice::LoadTexture("./resources/graph/tutorial/2_Image_Direction.png");
+	tutorialImageGraph[2] = Novice::LoadTexture("./resources/graph/tutorial/3_Image_Charge.png");
+	tutorialImageGraph[3] = Novice::LoadTexture("./resources/graph/tutorial/4_Image_Attack.png");
+	tutorialImageGraph[4] = Novice::LoadTexture("./resources/graph/tutorial/5_Image_PutDecoy.png");
+	tutorialImageGraph[5] = Novice::LoadTexture("./resources/graph/tutorial/6_Image_Decoy.png");
+	tutorialImageGraph[6] = Novice::LoadTexture("./resources/graph/tutorial/7_Image_DecoyHP.png");
+	tutorialImageGraph[7] = Novice::LoadTexture("./resources/graph/tutorial/8_Image_DecoyGameOver.png");
+	tutorialImageGraph[8] = Novice::LoadTexture("./resources/graph/tutorial/9_Image_CollectDecoy.png");
+	tutorialImageGraph[9] = Novice::LoadTexture("./resources/graph/tutorial/10_Image_decoyHeel.png");
+	tutorialImageGraph[10] = Novice::LoadTexture("./resources/graph/tutorial/11_Image_null.png");
+	tutorialImageGraph[11] = Novice::LoadTexture("./resources/graph/tutorial/12_Image_EAttck.png");
+	tutorialImageGraph[12] = Novice::LoadTexture("./resources/graph/tutorial/13_Image_energyMinus.png");
+	tutorialImageGraph[13] = Novice::LoadTexture("./resources/graph/tutorial/14_Image_scoreMinus.png");
+	tutorialImageGraph[14] = Novice::LoadTexture("./resources/graph/tutorial/15_Image_energyCharge.png");
+
+	int tutorial = MOVE;
+
+	easing tutorialUI = {
+
+		kWindowWidth / 2, -128.0f,
+		kWindowWidth / 2, -128.0f,
+		kWindowWidth / 2, 250.0f,
+		0, 170,
+		0, 170,
+		1280, 170,
+		0.0f,
+		0.0f
+
+	};
+
+	easing tutorialImageUI = {
+
+		kWindowWidth / 2, -360.0f,
+		kWindowWidth / 2, -360.0f,
+		kWindowWidth / 2, kWindowHeight / 1.75f,
+		0, 720,
+		0, 720,
+		1280, 720,
+		0.0f,
+		0.0f
+
+	};
+
+	int tutorialStart = false;
+	int tutorialFinish = false;
+
+	int nextTutorial = false;
+
+	int gameStart = false;
+	int gameFinish = false;
 
 	int activeTutorial = false;
 	int onceActive = false;
@@ -333,21 +378,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	int isEndTutorialAnim = false;
 	int activeTutorialGraph = 0;
 
-	easing tutorialUI = {
+	int tutorialFrame = 0;
+	int tutorialImageRadius = 0;
 
-		kWindowWidth / 2, -128.0f,
-		kWindowWidth / 2, -128.0f,
-		kWindowWidth / 2, 400.0f,
-		0, 256,
-		0, 256,
-		1920, 256,
-		0.0f,
-		0.0f
-
-	};
-
-	int activeTutorialTime = 120.0f;
-	int defActiveTutorialTime = 120.0f;
+	int activeTutorialTime = 10.0f;
+	int defActiveTutorialTime = 10.0f;
 
 #pragma endregion
 
@@ -375,6 +410,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	int scene = TITLE;
 
+	int goTutorialScene = false;
 	int goGameScene = false;
 	int goInitializeScene = false;
 
@@ -471,15 +507,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	int white1x1Png = Novice::LoadTexture("white1x1.png");
 
-	int bgGraph[6];
-
-	bgGraph[0] = Novice::LoadTexture("./resources/graph/map/BG_1.png");
-	bgGraph[1] = Novice::LoadTexture("./resources/graph/map/BG_2.png");
-	bgGraph[2] = Novice::LoadTexture("./resources/graph/map/BG_3.png");
-	bgGraph[3] = Novice::LoadTexture("./resources/graph/map/BG_4.png");
-	bgGraph[4] = Novice::LoadTexture("./resources/graph/map/BG_5.png");
-	bgGraph[5] = Novice::LoadTexture("./resources/graph/map/BG_6.png");
-
 	graph bg[6];
 
 	for (int i = 0; i < 6; i++) {
@@ -491,14 +518,79 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			kWindowWidth, kWindowHeight,
 			0.0f, 0.0f,
 			1920.0f, 1080.0f,
-			bgGraph[i]
+			white1x1Png
 
 		};
 
 	}
 
 #pragma endregion
+#pragma region タイトル
 
+	int titleCount = 0;
+	int titleFrame = 0;
+	int startCount = 0;
+
+	const int kMaxTitle = 23;
+
+	int playTitle = false;
+
+	graph title[kMaxTitle];
+
+	for (int i = 0; i < kMaxTitle; i++)
+	{
+		title[i].drawStartArea.x = 0;
+		title[i].drawStartArea.y = 0;
+		title[i].drawEndArea.x = 1280;
+		title[i].drawEndArea.y = 256;
+		title[i].translate.x = 1960 / 2;
+		title[i].translate.y = 360;
+		title[i].radius.x = 1280 / 2;
+		title[i].radius.y = 256 / 2;
+		title[i].imgRadius.x = 1280;
+		title[i].imgRadius.y = 256;
+
+	}
+
+	title[0].name = Novice::LoadTexture("./resources/graph/title/title1.png");
+	title[1].name = Novice::LoadTexture("./resources/graph/title/title2.png");
+	title[2].name = Novice::LoadTexture("./resources/graph/title/title3.png");
+	title[3].name = Novice::LoadTexture("./resources/graph/title/title4.png");
+	title[4].name = Novice::LoadTexture("./resources/graph/title/title5.png");
+	title[5].name = Novice::LoadTexture("./resources/graph/title/title6.png");
+	title[6].name = Novice::LoadTexture("./resources/graph/title/title7.png");
+	title[7].name = Novice::LoadTexture("./resources/graph/title/title8.png");
+	title[8].name = Novice::LoadTexture("./resources/graph/title/title9.png");
+	title[9].name = Novice::LoadTexture("./resources/graph/title/title10.png");
+	title[10].name = Novice::LoadTexture("./resources/graph/title/title11.png");
+	title[11].name = Novice::LoadTexture("./resources/graph/title/title12.png");
+	title[12].name = Novice::LoadTexture("./resources/graph/title/title13.png");
+	title[13].name = Novice::LoadTexture("./resources/graph/title/title14.png");
+	title[14].name = Novice::LoadTexture("./resources/graph/title/title15.png");
+	title[15].name = Novice::LoadTexture("./resources/graph/title/title16.png");
+	title[16].name = Novice::LoadTexture("./resources/graph/title/title17.png");
+	title[17].name = Novice::LoadTexture("./resources/graph/title/title18.png");
+	title[18].name = Novice::LoadTexture("./resources/graph/title/title19.png");
+	title[19].name = Novice::LoadTexture("./resources/graph/title/title20.png");
+	title[20].name = Novice::LoadTexture("./resources/graph/title/title21.png");
+	title[21].name = Novice::LoadTexture("./resources/graph/title/title22.png");
+	title[22].name = Novice::LoadTexture("./resources/graph/title/title23.png");
+
+	//SPACE
+
+	graph spaceGH{
+		{990,720},
+		{256,72},
+		{256,72},
+		{0,0},
+		{512,144},
+		Novice::LoadTexture("./resources/graph/title/space.png")
+	};
+
+	unsigned int spaceCarentAlpha = 0xFA;
+	unsigned int carentAlphaNum = 0x02;
+
+#pragma endregion
 #pragma region プレイヤー
 
 	/******** プレイヤー **********/
@@ -944,7 +1036,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	}
 
-	int energyAmount = 0;
+	int energyAmount = 100;
 	int maxEnergyAmount = 1000;
 
 	int energyIconGraph = Novice::LoadTexture("./resources/graph/energy/EnergyIcon.png");
@@ -1096,6 +1188,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	int resultGraph = Novice::LoadTexture("./resources/graph/result/result.png");
 
+	int scoreGraph = Novice::LoadTexture("./resources/graph/result/score.png");
+
+	int enemyResultGraph = Novice::LoadTexture("./resources/graph/result/EEnemy.png");
+
 	int scorePlayAnim = false;
 
 	easing scoreUI = {
@@ -1127,6 +1223,45 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	};
 
 	int endUIAnim = false;
+
+#pragma endregion
+
+#pragma region 音関係
+
+	#pragma region BGM
+
+	float titleBGMVolume = 0.05f;
+	float gameBGMVolume = 0.05f;
+
+	int titleBGM = Novice::LoadAudio("./resources/music/Are_You_Ready？.mp3");
+	int gameBGM = Novice::LoadAudio("./resources/music/Ucchii0 - Confront Presented by Kiiroihou【Free ver】.mp3");
+
+	int titleBGMHundle = -1;
+	int gameBGMHundle = -1;
+
+#pragma endregion
+	#pragma region 効果音
+	float SEVolume = 0.25f;
+
+	int clickSE = Novice::LoadAudio("./resources/SE/UI/click.wav");
+	int titleClickSE = Novice::LoadAudio("./resources/SE/UI/titleClick.wav");
+
+	int moveSE = Novice::LoadAudio("./resources/SE/player/Move.mp3");
+	int chargeSE = Novice::LoadAudio("./resources/SE/player/Charge.mp3");
+	int ShockSE = Novice::LoadAudio("./resources/SE/player/Shock.wav");
+
+	int chargeCompSE = Novice::LoadAudio("./resources/SE/player/chargeComp.wav");
+	int chargeCompSEhundle = -1;
+
+	int putDecoySE = Novice::LoadAudio("./resources/SE/decoy/PutDecoy.wav");
+	int collectDecoySE = Novice::LoadAudio("./resources/SE/decoy/CollectDecoy.wav");
+	int deadDecoySE = Novice::LoadAudio("./resources/SE/decoy/DeadDecoy.wav");
+
+	int deadEnemySE = Novice::LoadAudio("./resources/SE/enemy/DeathSound.wav");
+
+	int collectEnergySE = Novice::LoadAudio("./resources/SE/energy/collectEnergy.wav");
+
+#pragma endregion
 
 #pragma endregion
 
@@ -1177,7 +1312,18 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		if (fadeIn == true) {
 
-			currentFadeAlpha -= 0x03;
+			if (0.1f > titleBGMVolume) {
+
+				titleBGMVolume += 0.01f;
+
+			}
+			else {
+
+				titleBGMVolume = 0.1f;
+
+			}
+
+			currentFadeAlpha -= 0x02;
 
 			if (currentFadeAlpha > 0xFF) {
 
@@ -1189,7 +1335,18 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		else {
 
-			currentFadeAlpha += 0x03;
+			if (0 < titleBGMVolume) {
+
+				titleBGMVolume -= 0.0025f;
+
+			}
+			else {
+
+				titleBGMVolume = 0.0f;
+
+			}
+
+			currentFadeAlpha += 0x02;
 
 			if (currentFadeAlpha > 0xFF) {
 
@@ -1200,6 +1357,17 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		}
 
 		if (blackout == true) {
+
+			if (0.05f < gameBGMVolume) {
+
+				gameBGMVolume -= 0.0025f;
+
+			}
+			else {
+
+				gameBGMVolume = 0.05f;
+
+			}
 
 			currentBlackOutAlpha += 0x03;
 
@@ -1212,6 +1380,17 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		}
 		else {
 
+			if (0.15f > gameBGMVolume) {
+
+				gameBGMVolume += 0.025f;
+
+			}
+			else {
+
+				gameBGMVolume = 0.15f;
+
+			}
+
 			currentBlackOutAlpha -= 0x03;
 
 			if (currentBlackOutAlpha > 0xEE) {
@@ -1222,7 +1401,38 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		}
 
+		if (Fade == true) {
+
+			currentAlpha += 0x03;
+
+			if (currentAlpha > 0xFF) {
+
+				currentAlpha = 0xFF;
+
+			}
+
+		}
+		else {
+
+			currentAlpha -= 0x09;
+
+			if (currentAlpha > 0xFF) {
+
+				currentAlpha = 0x00;
+
+			}
+
+		}
+
 #pragma endregion
+
+		#pragma region 音量
+
+		Novice::SetAudioVolume(titleBGMHundle, titleBGMVolume);
+		Novice::SetAudioVolume(gameBGMHundle, gameBGMVolume);
+
+#pragma endregion
+
 
 		/*********************************
 			スクリーン関係ここまで
@@ -1232,19 +1442,64 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		{
 		case TITLE:
 
-		#pragma region シーン遷移
+		#pragma region BGM
 
-			if (keys[DIK_SPACE] && preKeys[DIK_SPACE] == 0) {
+			if (Novice::IsPlayingAudio(titleBGMHundle) == 0 || titleBGMHundle == -1) {
 
-				fadeIn = false;
-				goGameScene = true;
+				titleBGMHundle = Novice::PlayAudio(titleBGM, true, titleBGMVolume);
 
 			}
 
-			if (goGameScene == true) {
+#pragma endregion
+
+		#pragma region シーン遷移
+			if (keys[DIK_SPACE] && preKeys[DIK_SPACE] == 0) {
+
+				Novice::PlayAudio(titleClickSE, false, SEVolume);
+				playTitle = true;
+
+			}
+
+			if (playTitle)
+			{
+				spaceCarentAlpha = 0xFF;
+				
+				if (titleCount < kMaxTitle - 1) {
+
+					if (titleFrame > 2) {
+
+						titleCount++;
+						titleFrame = 0;
+
+					}
+					titleFrame++;
+					
+				}
+				else {
+
+					fadeIn = false;
+					goTutorialScene = true;
+
+				}
+
+			}
+			else
+			{
+				spaceCarentAlpha -= carentAlphaNum;
+				if (spaceCarentAlpha <= 0x0f || spaceCarentAlpha >= 0xFD)
+				{
+					carentAlphaNum *= -1;
+				}
+			}
+
+			if (goTutorialScene == true) {
 
 				if (currentFadeAlpha == 0xFF) {
 
+					Novice::StopAudio(titleBGMHundle);
+
+					titleCount = 0;
+					blackout = true;
 					scene++;
 
 				}
@@ -1256,6 +1511,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			break;
 		case GAME:
 
+
+			#pragma region BGM
+			if (Novice::IsPlayingAudio(gameBGMHundle) == 0 || gameBGMHundle == -1) {
+
+				gameBGMHundle = Novice::PlayAudio(gameBGM, true, gameBGMVolume);
+
+			}
+#pragma endregion
+
 		#pragma region タイマーUI
 
 			gameMinutesTimer = gameTimer / 3600;
@@ -1265,7 +1529,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			recGameSecondsTimer = gameSecondsTimer;
 
 			secondsTimerPosOrigin.x = player.translate.x - numberSize / 4;
-			secondsTimerPosOrigin.y = player.translate.y - player.radius * 3.0f;
+			secondsTimerPosOrigin.y = player.translate.y - player.radius * 3.25f;
 
 			for (int i = 0; i <= 1; i++) {
 
@@ -1419,6 +1683,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		#pragma endregion
 
+		#pragma region エネルギーゲージ
+
+					machineGage.translate.x = Machine.translate.x - Machine.radius / 2 + 10;
+					machineGage.translate.y = Machine.translate.y - Machine.radius / 2 + 10;
+
+					machineGage.length.y = -Machine.HP / 2.03;
+
+		#pragma endregion
+
 		#pragma region 倒した敵数を表示
 
 			for (int i = 0; i < 4; i++) {
@@ -1445,6 +1718,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 #pragma endregion
 
 		#pragma region チュートリアル
+
+		#pragma region プレイヤー位置初期化
 
 			if (tutorialStart == false) {
 
@@ -1498,19 +1773,137 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 				fadeIn = true;
 
-				if (currentFadeAlpha == 0x00) {
+				if (tutorialFinish == false) {
 
-					tutorialStart = true;
+					if (currentFadeAlpha == 0x00) {
+
+						tutorialStart = true;
+
+					}
 
 				}
 
 			}
 
+		#pragma endregion
+
 			if (tutorialStart == true && gameFinish == false) {
+
+			#pragma region チュートリアルスキップ
 
 				if (tutorialFinish == false) {
 
 					if (keys[DIK_W] && !preKeys[DIK_W]) {
+
+						Novice::PlayAudio(titleClickSE, false, SEVolume);
+						tutorial = kMaxTutorial - 1;
+						endTutorialAnim = true;
+						tutorialFinish = true;
+
+					}
+
+				}
+			#pragma endregion
+
+			}
+
+			#pragma region テキスト出現と消去
+
+			if (activeTutorial == true) {
+
+				if (tutorialUI.translate.y != tutorialUI.endPos.y) {
+
+					if (tutorialUI.time < 1.0f) {
+						tutorialUI.time += 0.01f;
+					}
+					else {
+						tutorialUI.time = 1.0f;
+					}
+
+					tutorialUI.easeTime = 1.0f - powf(1.0f - tutorialUI.time, 3.0f);
+					tutorialImageUI.easeTime = 1.0f - powf(1.0f - tutorialUI.time, 3.0f);
+
+					tutorialUI.translate.y = (1.0f - tutorialUI.easeTime) * tutorialUI.startPos.y + tutorialUI.easeTime * tutorialUI.endPos.y;
+					tutorialImageUI.translate.y = (1.0f - tutorialImageUI.easeTime) * tutorialImageUI.startPos.y + tutorialImageUI.easeTime * tutorialImageUI.endPos.y;
+
+					tutorialUI.radius.x = (1.0f - tutorialUI.easeTime) * tutorialUI.startRadius.x + tutorialUI.easeTime * tutorialUI.endRadius.x;
+					tutorialImageUI.radius.x = (1.0f - tutorialImageUI.easeTime) * tutorialImageUI.startRadius.x + tutorialImageUI.easeTime * tutorialImageUI.endRadius.x;
+
+				}
+				else {
+
+					tutorialUI.time = 0;
+
+					if (activeTutorialTime > 0) {
+						activeTutorialTime--;
+					}
+					else {
+						activeTutorialTime = 0;
+					}
+				}
+
+			}
+
+			if (endTutorialAnim == true) {
+
+				Fade = false;
+
+				if (currentAlpha == 0x00) {
+
+					activeTutorial = false;
+					nextTutorial = true;
+					currentAlpha = 0xFF;
+
+				}
+
+			}
+
+			#pragma endregion
+
+			#pragma region テキスト内容変更
+
+			if (tutorialStart == true && tutorialFinish == false) {
+
+				if (onceActive == false) {
+
+					activeTutorial = true;
+					onceActive = true;
+
+				}
+
+				if (keys[DIK_SPACE] && !preKeys[DIK_SPACE]) {
+
+					Novice::PlayAudio(clickSE, false, SEVolume);
+					tutorialUI.translate.y = tutorialUI.translate.y;
+					tutorialImageUI.translate.y = tutorialImageUI.translate.y;
+					tutorialUI.radius.x = tutorialUI.radius.x;
+					tutorialImageUI.radius.x = tutorialImageUI.radius.x;
+					endTutorialAnim = true;
+				}
+
+				if (nextTutorial == true) {
+
+					Fade = true;
+					nextTutorial = false;
+					endTutorialAnim = false;
+					tutorialUI.translate.y = tutorialUI.startPos.y;
+					tutorialImageUI.translate.y = tutorialImageUI.startPos.y;
+					tutorialUI.radius.x = tutorialUI.startRadius.x;
+					tutorialImageUI.radius.x = tutorialImageUI.startRadius.x;
+
+					tutorialFrame = 0;
+					tutorialImageRadius = 0;
+
+					activeTutorialTime = defActiveTutorialTime;
+
+					onceActive = false;
+
+					if (tutorial < kMaxTutorial - 1) {
+
+						tutorial++;
+
+					}
+					else {
 
 						tutorialFinish = true;
 
@@ -1518,6 +1911,91 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 				}
 
+			}
+
+#pragma endregion
+
+			if (activeTutorial == true) {
+
+				if (tutorialImageRadius > 5) {
+
+					tutorialImageRadius = 0;
+
+				}
+
+				if (tutorialFrame > 15) {
+
+					tutorialImageRadius++;
+					tutorialFrame = 0;
+
+				}
+				tutorialFrame++;
+
+			}
+
+			if (tutorialFinish == true && gameStart == false) {
+
+				blackout = false;
+				goGameScene = true;
+
+			}
+
+			if (goGameScene == true) {
+
+				if (currentBlackOutAlpha == 0x00) {
+
+					gameStart = true;
+
+				}
+
+			}
+
+#pragma endregion
+
+		#pragma region ゲーム中
+
+			if (gameStart == true && gameFinish == false) {
+				
+				if (fadeIn == false) {
+
+					fadeIn = true;
+
+				}
+
+			#pragma region ゲーム時間
+				
+				if (gameTimer > 0) {
+
+					gameTimer--;
+
+				}
+				else {
+
+					gameTimer = 0;
+					gameFinish = true;
+
+				}
+
+			#pragma endregion
+			#pragma region スポーンタイマー
+
+				if (nowSpawnCounter <= kMaxEnemy) {
+
+					if (spawnTimer <= 0.0f) {
+
+						canSpawn = true;
+
+					}
+					else {
+
+						canSpawn = false;
+						spawnTimer--;
+
+					}
+
+				}
+
+#pragma endregion
 			#pragma region プレイヤー
 
 				#pragma region 壁貫通防止
@@ -1547,363 +2025,363 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 #pragma endregion
 				#pragma region チャージ
 				/******** チャージ関係の処理 **********/
-				if (tutorialMove == true) {
+				chargeGage.translate.x = player.translate.x - player.radius / 2;
+				chargeGage.translate.y = player.translate.y + player.radius / 1.5f;
 
-					chargeGage.translate.x = player.translate.x - player.radius / 2;
-					chargeGage.translate.y = player.translate.y + player.radius / 1.5f;
+				if (chargeCoolTime > 0.0f) {
 
-					if (chargeCoolTime > 0.0f) {
+					chargeCoolTime--;
+					canCharge = false;
 
-						chargeCoolTime--;
-						canCharge = false;
+				}
+				else {
 
-					}
-					else {
+					canCharge = true;
 
-						canCharge = true;
+				}
 
-					}
+				if (keys[DIK_SPACE] && !preKeys[DIK_SPACE]) {
 
-					//スペースキー長押し
-					if (keys[DIK_SPACE]) {
+					Novice::PlayAudio(chargeSE, 0, SEVolume);
 
-						//チャージ状態true
-						isCharging = true;
+				}
 
-					}
-					else {
+				//スペースキー長押し
+				if (keys[DIK_SPACE]) {
 
-						//チャージ状態false
-						isCharging = false;
-						chargeGage.length.x = 0;
+					//チャージ状態true
+					isCharging = true;
 
-					}
+				}
+				else {
 
-					if (isCharging == true) {
+					//チャージ状態false
+					isCharging = false;
+					chargeGage.length.x = 0;
 
-						moveSpeed -= 0.1f;
-						player.translate.x += (cosf(player.theta) * moveSpeed);
-						player.translate.y += -(sinf(player.theta) * moveSpeed);
+				}
 
-						if (moveSpeed < 0) {
+				if (isCharging == true) {
 
-							moveSpeed = 0;
+					moveSpeed -= 0.1f;
+					player.translate.x += (cosf(player.theta) * moveSpeed);
+					player.translate.y += -(sinf(player.theta) * moveSpeed);
 
-						}
+					if (moveSpeed < 0) {
 
-					}
-					else if (isAttacking == false) {
-
-						moveSpeed = 5.0f;
-
-						player.translate.x += (cosf(player.theta) * moveSpeed);
-						player.translate.y += -(sinf(player.theta) * moveSpeed);
+						moveSpeed = 0;
 
 					}
 
-					if (keys[DIK_RIGHT] || keys[DIK_D]) {
+				}
+				else if (isAttacking == false) {
 
-						player.theta += 0.1f;
+					moveSpeed = 5.0f;
 
-					}
+					player.translate.x += (cosf(player.theta) * moveSpeed);
+					player.translate.y += -(sinf(player.theta) * moveSpeed);
 
-					else if (keys[DIK_LEFT] || keys[DIK_A]) {
+				}
 
-						player.theta -= 0.1f;
+				if (keys[DIK_RIGHT] || keys[DIK_D]) {
 
-					}
-
-					if (theta >= 6.0f) {
-
-						player.theta = 0.0f;
-
-						if (tutorial == ANGLE && tutorialAngle == false) {
-
-							tutorialAngle = true;
-
-						}
-
-					}
-					else if (theta < 0.0f) {
-
-						player.theta = 5.9f;
-
-						if (tutorial == ANGLE && tutorialAngle == false) {
-
-							tutorialAngle = true;
-
-						}
-
-					}
-
-					playerRotate.q1.x = playerPoint.q1.x * cosf(player.theta) - playerPoint.q1.y * -sinf(player.theta) + player.translate.x;
-					playerRotate.q1.y = playerPoint.q1.y * cosf(player.theta) + playerPoint.q1.x * -sinf(player.theta) + player.translate.y;
-
-					playerRotate.q2.x = playerPoint.q2.x * cosf(player.theta) - playerPoint.q2.y * -sinf(player.theta) + player.translate.x;
-					playerRotate.q2.y = playerPoint.q2.y * cosf(player.theta) + playerPoint.q2.x * -sinf(player.theta) + player.translate.y;
-
-					playerRotate.q3.x = playerPoint.q3.x * cosf(player.theta) - playerPoint.q3.y * -sinf(player.theta) + player.translate.x;
-					playerRotate.q3.y = playerPoint.q3.y * cosf(player.theta) + playerPoint.q3.x * -sinf(player.theta) + player.translate.y;
-
-					playerRotate.q4.x = playerPoint.q4.x * cosf(player.theta) - playerPoint.q4.y * -sinf(player.theta) + player.translate.x;
-					playerRotate.q4.y = playerPoint.q4.y * cosf(player.theta) + playerPoint.q4.x * -sinf(player.theta) + player.translate.y;
-
-					playerDirection.q1.x = playerDirectionOrigin.q1.x * cosf(player.theta) - playerDirectionOrigin.q1.y * -sinf(player.theta) + player.translate.x;
-					playerDirection.q1.y = playerDirectionOrigin.q1.y * cosf(player.theta) + playerDirectionOrigin.q1.x * -sinf(player.theta) + player.translate.y;
-
-					playerDirection.q2.x = playerDirectionOrigin.q2.x * cosf(player.theta) - playerDirectionOrigin.q2.y * -sinf(player.theta) + player.translate.x;
-					playerDirection.q2.y = playerDirectionOrigin.q2.y * cosf(player.theta) + playerDirectionOrigin.q2.x * -sinf(player.theta) + player.translate.y;
-
-					playerDirection.q3.x = playerDirectionOrigin.q3.x * cosf(player.theta) - playerDirectionOrigin.q3.y * -sinf(player.theta) + player.translate.x;
-					playerDirection.q3.y = playerDirectionOrigin.q3.y * cosf(player.theta) + playerDirectionOrigin.q3.x * -sinf(player.theta) + player.translate.y;
-
-					playerDirection.q4.x = playerDirectionOrigin.q4.x * cosf(player.theta) - playerDirectionOrigin.q4.y * -sinf(player.theta) + player.translate.x;
-					playerDirection.q4.y = playerDirectionOrigin.q4.y * cosf(player.theta) + playerDirectionOrigin.q4.x * -sinf(player.theta) + player.translate.y;
-
-					//チャージ状態trueの時
-					if (isCharging == true && isAttacking == false && canCharge == true) {
-
-						if (chargePower < maxPower) {
-
-							//チャージ
-							chargePower += 5.0f;
-							chargeGage.length.x = chargePower * 2.14f;
-
-						}
-						else {
-
-							//一定の値を超えたら固定
-							if (putDecoy == true) {
-
-								canEnhancedAttack = true;
-								playFlashEffect = true;
-
-							}
-							chargePower = maxPower;
-
-						}
-						/******** チャージエフェクト **********/
-						for (int i = 0; i < chargeEffectMax; i++)
-						{
-							//エフェクトが出ていない
-							if (!chargeEffect[i].isActive)
-							{
-
-								chargeEffect[i].translate.x = player.translate.x;
-								chargeEffect[i].translate.y = player.translate.y;
-								chargeEffect[i].isActive = true;
-								chargeEffect[i].carentAlpha = 0xAA;
-								chargeEffect[i].vectorLength = player.radius;
-
-								if (rand() % 8 == 0)
-								{
-									chargeEffect[i].moveDirection.x = 0;
-									chargeEffect[i].moveDirection.y = -1;
-								}
-								else if (rand() % 8 == 1) {
-									chargeEffect[i].moveDirection.x = -1;
-									chargeEffect[i].moveDirection.y = -1;
-								}
-								else if (rand() % 8 == 2) {
-									chargeEffect[i].moveDirection.x = 1;
-									chargeEffect[i].moveDirection.y = 0;
-								}
-								else if (rand() % 8 == 3) {
-									chargeEffect[i].moveDirection.x = -1;
-									chargeEffect[i].moveDirection.y = 1;
-								}
-								else if (rand() % 8 == 4) {
-									chargeEffect[i].moveDirection.x = 1;
-									chargeEffect[i].moveDirection.y = 1;
-								}
-								else if (rand() % 8 == 5) {
-									chargeEffect[i].moveDirection.x = 1;
-									chargeEffect[i].moveDirection.y = -1;
-								}
-								else if (rand() % 8 == 6) {
-									chargeEffect[i].moveDirection.x = -1;
-									chargeEffect[i].moveDirection.y = 0;
-								}
-								else if (rand() % 8 == 7) {
-									chargeEffect[i].moveDirection.x = 0;
-									chargeEffect[i].moveDirection.y = 1;
-								}
-								break;
-							}
-							//エフェクトが出ている
-							else {
-								chargeEffect[i].vectorLength -= 4;
-								if (chargeEffect[i].vectorLength <= 0) {
-									chargeEffect[i].isActive = false;
-								}
-							}
-						}
-					}
-					else {
-
-						if (chargePower > 0) {
-
-							//スペースキーを離したらパワーが減る
-							chargePower -= 4.0f;
-
-						}
-						else {
-
-							//0以下になったら値を0にリセット
-							chargePower = 0;
-
-							if (canEnhancedAttack == true) {
-
-								doEnhancedAttack = true;
-								canEnhancedAttack = false;
-
-							}
-
-							isAttacking = false;
-
-						}
-
-						//動いた時にエフェクトを薄くしていく
-						for (int i = 0; i < chargeEffectMax; i++)
-						{
-							if (chargeEffect[i].isActive)
-							{
-								chargeEffect[i].carentAlpha -= 0x11;
-
-								if (chargeEffect[i].carentAlpha <= 0) {
-
-									chargeEffect[i].isActive = false;
-
-								}
-							}
-						}
-					}
-
-					if (!keys[DIK_SPACE] && preKeys[DIK_SPACE]) {
-
-						if (isAttacking == false) {
-
-							isAttacking = true;
-
-						}
-
-					}
-
-					for (int i = 0; i < maxEnhancedAttack; i++) {
-
-						if (isEnhancedAttack[i] == true) {
-
-							if (shockRadius[i] < maxShockRadius) {
-
-								shockRadius[i] += 25.0f;
-
-							}
-							else {
-
-								shockRadius[i] = 0;
-
-								shockTime[i] = 0;
-
-								isEnhancedAttack[i] = false;
-							}
-
-						}
-						else {
-
-							if (doEnhancedAttack == true) {
-
-								shockOrigin[i] = player.translate;
-
-								playFlashEffect = false;
-								flashEffectFrame = 0;
-								isEnhancedAttack[i] = true;
-								doEnhancedAttack = false;
-							}
-
-						}
-
-					}
-
-					if (playFlashEffect == true) {
-
-						if (flashEffectFrame < 4) {
-
-							if (flame > 3) {
-
-								flashEffectFrame++;
-								flame = 0;
-							}
-							flame++;
-
-						}
-						else {
-
-							flashEffectFrame = 0;
-
-						}
-
-					}
-
-					if (isAttacking == true) {
-
-						chargeCoolTime = defChargeCoolTime;
-
-						if (enhanceSpeed == true) {
-
-							player.translate.x += (cosf(player.theta) * player.speed * 1.25f * chargePower / 3.0f);
-							player.translate.y += -(sinf(player.theta) * player.speed * 1.25f * chargePower / 3.0f);
-
-						}
-						else {
-
-							player.translate.x += (cosf(player.theta) * player.speed * chargePower / 3.0f);
-							player.translate.y += -(sinf(player.theta) * player.speed * chargePower / 3.0f);
-
-						}
-
-						chargePower--;
-
-						//残像
-						for (int i = 0; i < afterimageMax; i++)
-						{
-							//残像が出ていない
-							if (!afterimage[i].isActive)
-							{
-								afterimage[i].isActive = true;
-								afterimage[i].translate.x = player.translate.x;
-								afterimage[i].translate.y = player.translate.y;
-								afterimage[i].carentAlpha = 0xA0;
-								afterimage[i].radius = 128;
-								break;
-							}
-							//出てる
-							else
-							{
-								afterimage[i].carentAlpha -= 0x0A;
-								if (afterimage[i].carentAlpha <= 0x00) {
-									afterimage[i].isActive = false;
-								}
-							}
-						}
-					}
-					//動いてないとき
-					else
-					{
-						for (int i = 0; i < afterimageMax; i++)
-						{
-							if (afterimage[i].isActive)
-							{
-								afterimage[i].carentAlpha -= 0x0A;
-								if (afterimage[i].carentAlpha <= 0x00) {
-									afterimage[i].isActive = false;
-								}
-							}
-						}
-					}
+					player.theta += 0.1f;
 
 
 				}
-				
+
+				else if (keys[DIK_LEFT] || keys[DIK_A]) {
+
+					player.theta -= 0.1f;
+
+				}
+
+				if (theta >= 6.0f) {
+
+					player.theta = 0.0f;
+
+				}
+				else if (theta < 0.0f) {
+
+					player.theta = 5.9f;
+
+				}
+
+				playerRotate.q1.x = playerPoint.q1.x * cosf(player.theta) - playerPoint.q1.y * -sinf(player.theta) + player.translate.x;
+				playerRotate.q1.y = playerPoint.q1.y * cosf(player.theta) + playerPoint.q1.x * -sinf(player.theta) + player.translate.y;
+
+				playerRotate.q2.x = playerPoint.q2.x * cosf(player.theta) - playerPoint.q2.y * -sinf(player.theta) + player.translate.x;
+				playerRotate.q2.y = playerPoint.q2.y * cosf(player.theta) + playerPoint.q2.x * -sinf(player.theta) + player.translate.y;
+
+				playerRotate.q3.x = playerPoint.q3.x * cosf(player.theta) - playerPoint.q3.y * -sinf(player.theta) + player.translate.x;
+				playerRotate.q3.y = playerPoint.q3.y * cosf(player.theta) + playerPoint.q3.x * -sinf(player.theta) + player.translate.y;
+
+				playerRotate.q4.x = playerPoint.q4.x * cosf(player.theta) - playerPoint.q4.y * -sinf(player.theta) + player.translate.x;
+				playerRotate.q4.y = playerPoint.q4.y * cosf(player.theta) + playerPoint.q4.x * -sinf(player.theta) + player.translate.y;
+
+				playerDirection.q1.x = playerDirectionOrigin.q1.x * cosf(player.theta) - playerDirectionOrigin.q1.y * -sinf(player.theta) + player.translate.x;
+				playerDirection.q1.y = playerDirectionOrigin.q1.y * cosf(player.theta) + playerDirectionOrigin.q1.x * -sinf(player.theta) + player.translate.y;
+
+				playerDirection.q2.x = playerDirectionOrigin.q2.x * cosf(player.theta) - playerDirectionOrigin.q2.y * -sinf(player.theta) + player.translate.x;
+				playerDirection.q2.y = playerDirectionOrigin.q2.y * cosf(player.theta) + playerDirectionOrigin.q2.x * -sinf(player.theta) + player.translate.y;
+
+				playerDirection.q3.x = playerDirectionOrigin.q3.x * cosf(player.theta) - playerDirectionOrigin.q3.y * -sinf(player.theta) + player.translate.x;
+				playerDirection.q3.y = playerDirectionOrigin.q3.y * cosf(player.theta) + playerDirectionOrigin.q3.x * -sinf(player.theta) + player.translate.y;
+
+				playerDirection.q4.x = playerDirectionOrigin.q4.x * cosf(player.theta) - playerDirectionOrigin.q4.y * -sinf(player.theta) + player.translate.x;
+				playerDirection.q4.y = playerDirectionOrigin.q4.y * cosf(player.theta) + playerDirectionOrigin.q4.x * -sinf(player.theta) + player.translate.y;
+
+				//チャージ状態trueの時
+				if (isCharging == true && isAttacking == false && canCharge == true) {
+
+					if (chargePower < maxPower) {
+
+						//チャージ
+						chargePower += 5.0f;
+						chargeGage.length.x = chargePower * 2.14f;
+
+					}
+					else {
+
+						//一定の値を超えたら固定
+						if (putDecoy == true) {
+
+							canEnhancedAttack = true;
+							playFlashEffect = true;
+
+						}
+						chargePower = maxPower;
+
+					}
+					/******** チャージエフェクト **********/
+					for (int i = 0; i < chargeEffectMax; i++)
+					{
+						//エフェクトが出ていない
+						if (!chargeEffect[i].isActive)
+						{
+
+							chargeEffect[i].translate.x = player.translate.x;
+							chargeEffect[i].translate.y = player.translate.y;
+							chargeEffect[i].isActive = true;
+							chargeEffect[i].carentAlpha = 0xAA;
+							chargeEffect[i].vectorLength = player.radius;
+
+							if (rand() % 8 == 0)
+							{
+								chargeEffect[i].moveDirection.x = 0;
+								chargeEffect[i].moveDirection.y = -1;
+							}
+							else if (rand() % 8 == 1) {
+								chargeEffect[i].moveDirection.x = -1;
+								chargeEffect[i].moveDirection.y = -1;
+							}
+							else if (rand() % 8 == 2) {
+								chargeEffect[i].moveDirection.x = 1;
+								chargeEffect[i].moveDirection.y = 0;
+							}
+							else if (rand() % 8 == 3) {
+								chargeEffect[i].moveDirection.x = -1;
+								chargeEffect[i].moveDirection.y = 1;
+							}
+							else if (rand() % 8 == 4) {
+								chargeEffect[i].moveDirection.x = 1;
+								chargeEffect[i].moveDirection.y = 1;
+							}
+							else if (rand() % 8 == 5) {
+								chargeEffect[i].moveDirection.x = 1;
+								chargeEffect[i].moveDirection.y = -1;
+							}
+							else if (rand() % 8 == 6) {
+								chargeEffect[i].moveDirection.x = -1;
+								chargeEffect[i].moveDirection.y = 0;
+							}
+							else if (rand() % 8 == 7) {
+								chargeEffect[i].moveDirection.x = 0;
+								chargeEffect[i].moveDirection.y = 1;
+							}
+							break;
+						}
+						//エフェクトが出ている
+						else {
+							chargeEffect[i].vectorLength -= 4;
+							if (chargeEffect[i].vectorLength <= 0) {
+								chargeEffect[i].isActive = false;
+							}
+						}
+					}
+				}
+				else {
+
+					if (chargePower > 0) {
+
+						//スペースキーを離したらパワーが減る
+						chargePower -= 4.0f;
+
+					}
+					else {
+
+						//0以下になったら値を0にリセット
+						chargePower = 0;
+
+						if (canEnhancedAttack == true) {
+
+							doEnhancedAttack = true;
+							canEnhancedAttack = false;
+
+						}
+
+						isAttacking = false;
+
+					}
+
+					//動いた時にエフェクトを薄くしていく
+					for (int i = 0; i < chargeEffectMax; i++)
+					{
+						if (chargeEffect[i].isActive)
+						{
+							chargeEffect[i].carentAlpha -= 0x11;
+
+							if (chargeEffect[i].carentAlpha <= 0) {
+
+								chargeEffect[i].isActive = false;
+
+							}
+						}
+					}
+				}
+
+				if (!keys[DIK_SPACE] && preKeys[DIK_SPACE]) {
+
+					Novice::PlayAudio(moveSE, 0, SEVolume);
+
+					if (isAttacking == false) {
+
+						isAttacking = true;
+
+					}
+
+				}
+
+				for (int i = 0; i < maxEnhancedAttack; i++) {
+
+					if (isEnhancedAttack[i] == true) {
+
+						if (shockRadius[i] < maxShockRadius) {
+
+							shockRadius[i] += 25.0f;
+
+						}
+						else {
+
+							shockRadius[i] = 0;
+
+							shockTime[i] = 0;
+
+							isEnhancedAttack[i] = false;
+						}
+
+					}
+					else {
+
+						if (doEnhancedAttack == true) {
+
+							shockOrigin[i] = player.translate;
+							Novice::PlayAudio(ShockSE, 0, SEVolume);
+							playFlashEffect = false;
+							flashEffectFrame = 0;
+							isEnhancedAttack[i] = true;
+							doEnhancedAttack = false;
+						}
+
+					}
+
+				}
+
+				if (playFlashEffect == true) {
+
+					if (Novice::IsPlayingAudio(chargeCompSEhundle) == 0 || chargeCompSEhundle == -1) {
+
+						chargeCompSEhundle = Novice::PlayAudio(chargeCompSE, false, SEVolume);
+
+					}
+
+					if (flashEffectFrame < 4) {
+
+						if (flame > 3) {
+
+							flashEffectFrame++;
+							flame = 0;
+						}
+						flame++;
+
+					}
+					else {
+
+						flashEffectFrame = 0;
+
+					}
+
+				}
+
+				if (isAttacking == true) {
+
+					chargeCoolTime = defChargeCoolTime;
+
+					if (enhanceSpeed == true) {
+
+						player.translate.x += (cosf(player.theta) * player.speed * 1.25f * chargePower / 3.0f);
+						player.translate.y += -(sinf(player.theta) * player.speed * 1.25f * chargePower / 3.0f);
+
+					}
+					else {
+
+						player.translate.x += (cosf(player.theta) * player.speed * chargePower / 3.0f);
+						player.translate.y += -(sinf(player.theta) * player.speed * chargePower / 3.0f);
+
+					}
+
+					chargePower--;
+
+					//残像
+					for (int i = 0; i < afterimageMax; i++)
+					{
+						//残像が出ていない
+						if (!afterimage[i].isActive)
+						{
+							afterimage[i].isActive = true;
+							afterimage[i].translate.x = player.translate.x;
+							afterimage[i].translate.y = player.translate.y;
+							afterimage[i].carentAlpha = 0xA0;
+							afterimage[i].radius = 128;
+							break;
+						}
+						//出てる
+						else
+						{
+							afterimage[i].carentAlpha -= 0x0A;
+							if (afterimage[i].carentAlpha <= 0x00) {
+								afterimage[i].isActive = false;
+							}
+						}
+					}
+				}
+				//動いてないとき
+				else
+				{
+					for (int i = 0; i < afterimageMax; i++)
+					{
+						if (afterimage[i].isActive)
+						{
+							afterimage[i].carentAlpha -= 0x0A;
+							if (afterimage[i].carentAlpha <= 0x00) {
+								afterimage[i].isActive = false;
+							}
+						}
+					}
+				}
+
+
+
 #pragma endregion
 				#pragma region スクロール
 
@@ -1937,19 +2415,17 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			#pragma region 味方
 
 				#pragma region デコイ設置
-				if (tutorialDecoy == true) {
+				if (keys[DIK_S] && !preKeys[DIK_S] || keys[DIK_DOWNARROW] && !preKeys[DIK_DOWNARROW]) {
 
-					if (keys[DIK_S] && !preKeys[DIK_S] || keys[DIK_DOWNARROW] && !preKeys[DIK_DOWNARROW]) {
+					Novice::PlayAudio(putDecoySE, 0, SEVolume);
 
-						ally.HP -= 5;
+					ally.HP -= 5;
 
-						putDecoy = true;
-						enhanceSpeed = true;
-
-					}
+					putDecoy = true;
+					enhanceSpeed = true;
 
 				}
-				
+
 #pragma endregion
 
 				#pragma region デコイの回転処理
@@ -2014,6 +2490,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 						if (canCollectDecoy == true && isRepairing == false) {
 
+							Novice::PlayAudio(collectDecoySE, 0, SEVolume);
+
 							putDecoy = false;
 							repairComplete = false;
 
@@ -2040,6 +2518,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			#pragma region デコイ死亡エフェクト
 				if (playDeadDecoyEffect && !endDeadDecoyEffect)
 				{
+
 					for (int i = 0; i < kMaxdeadDecoyEffect; i++)
 					{
 						//エフェクトが出ていない
@@ -2337,6 +2816,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 								playDeathEffect[i] = true;
 							}
 
+							Novice::PlayAudio(deadEnemySE, 0, SEVolume);
+
 							enemy[i].translate.x = 0.0f;
 							enemy[i].translate.y = 0.0f;
 
@@ -2462,15 +2943,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 #pragma endregion
 
-				#pragma region エネルギーゲージ
-
-				machineGage.translate.x = Machine.translate.x - Machine.radius / 2 + 10;
-				machineGage.translate.y = Machine.translate.y - Machine.radius / 2 + 10;
-
-				machineGage.length.y = -Machine.HP / 2.03;
-
-#pragma endregion
-
 #pragma endregion
 			#pragma region エネルギー
 
@@ -2498,6 +2970,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 						if (colletCount[i] >= 10)
 						{
 							if (en2p[i].length <= energy[i].radius / 2 + player.radius / 2) {
+
+								Novice::PlayAudio(collectEnergySE, 0, SEVolume);
 
 								if (energyAmount < maxEnergyAmount) {
 
@@ -2649,195 +3123,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 				}
 
 #pragma endregion
-
-			}
-
-			if (activeTutorial == true) {
-
-				if (tutorialUI.translate.y != tutorialUI.endPos.y) {
-
-					if (tutorialUI.time < 1.0f) {
-						tutorialUI.time += 0.01f;
-					}
-					else {
-						tutorialUI.time = 1.0f;
-					}
-
-					tutorialUI.easeTime = 1.0f - powf(1.0f - tutorialUI.time, 5.0f);
-					tutorialUI.translate.y = (1.0f - tutorialUI.easeTime) * tutorialUI.startPos.y + tutorialUI.easeTime * tutorialUI.endPos.y;
-					tutorialUI.radius.x = (1.0f - tutorialUI.easeTime) * tutorialUI.startRadius.x + tutorialUI.easeTime * tutorialUI.endRadius.x;
-
-				}
-				else {
-
-					tutorialUI.time = 0;
-
-					if (activeTutorialTime > 0) {
-						activeTutorialTime--;
-					}
-					else {
-						activeTutorialTime = 0;
-					}
-				}
-				
-			}
-
-			if (endTutorialAnim == true) {
-
-				if (tutorialUI.translate.y != tutorialUI.startPos.y) {
-
-					if (tutorialUI.time < 1.0f) {
-						tutorialUI.time += 0.01f;
-					}
-					else {
-						tutorialUI.time = 1.0f;
-					}
-					
-					tutorialUI.easeTime = 1.0f - powf(1.0f - tutorialUI.time, 5.0f);
-
-					tutorialUI.translate.y = (1.0f - tutorialUI.easeTime) * tutorialUI.endPos.y + tutorialUI.easeTime * tutorialUI.startPos.y;
-					tutorialUI.radius.x = (1.0f - tutorialUI.easeTime) * tutorialUI.endRadius.x + tutorialUI.easeTime * tutorialUI.startRadius.x;
-
-				}
-				else {
-
-					isEndTutorialAnim = true;
-
-				}
-
-			}
-
-			if (tutorialFinish == false) {
-
-				switch (tutorial)
-				{
-				case MOVE:
-
-					if (onceActive == false) {
-
-						activeTutorial = true;
-						onceActive = true;
-
-					}
-
-					tutorialMove = true;
-
-					if (activeTutorialTime == 0) {
-
-						endTutorialAnim = true;
-
-					}
-
-					if (nextTutorial == true) {
-
-						tutorial++;
-						nextTutorial = false;
-
-					}
-
-					break;
-
-				case ANGLE:
-
-					break;
-				case CHARGE:
-
-					break;
-
-				case ATTACK:
-
-					break;
-
-				case PUTDECOY:
-
-					break;
-
-				case DECOY:
-
-					break;
-
-				case DECOYHP:
-
-					break;
-
-				case DECOYGAMEOVER:
-
-					break;
-
-				case COLLECTDECOY:
-
-					break;
-
-				case DECOYHEAL:
-
-					break;
-
-				case ENHANCEDATTACK:
-
-					break;
-
-				case EATTACK:
-
-					break;
-
-				case MACHINEHP:
-
-					break;
-
-				case MACHINEREPAIR:
-
-					break;
-
-				}
-
-			}
-
-			if (tutorialFinish == true && gameFinish == false) {
-
-				gameStart = true;
-
-			}
-
-#pragma endregion
-
-		#pragma region ゲーム中
-
-			if (gameStart == true && gameFinish == false) {
-				
-			#pragma region ゲーム時間
-				
-				if (gameTimer > 0) {
-
-					gameTimer--;
-
-				}
-				else {
-
-					gameTimer = 0;
-					gameFinish = true;
-
-				}
-
-			#pragma endregion
-			#pragma region スポーンタイマー
-
-				if (nowSpawnCounter <= kMaxEnemy) {
-
-					if (spawnTimer <= 0.0f) {
-
-						canSpawn = true;
-
-					}
-					else {
-
-						canSpawn = false;
-						spawnTimer--;
-
-					}
-
-				}
-
-#pragma endregion
 			#pragma region 時間がたつごとに機械のエネルギー減少
 
 				if (Machine.HP >= 500) {
@@ -2904,6 +3189,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 					if (!playDeadDecoyEffect)
 					{
+						Novice::PlayAudio(deadDecoySE, 0, SEVolume * 2);
 						playDeadDecoyEffect = true;
 					}
 
@@ -2962,6 +3248,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 					if (keys[DIK_SPACE] && !preKeys[DIK_SPACE]) {
 
+						Novice::PlayAudio(clickSE, false, SEVolume);
 						resultUI.radius.x = resultUI.endRadius.x;
 						resultUI.translate.y = resultUI.endPos.y;
 						scoreUI.translate.x = scoreUI.endPos.x;
@@ -3060,7 +3347,18 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		#pragma region 初期化
 
+			currentFadeAlpha = 0xFF;
+			fadeIn = true;
+
+			currentBlackOutAlpha = 0x00;
+			blackout = false;
+
+			currentAlpha = 0xFF;
+			Fade = true;
+
 			#pragma region ゲーム
+
+			goGameScene = false;
 
 			gameTimer = 3600;
 
@@ -3070,10 +3368,56 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			tutorialStart = false;
 			tutorialFinish = false;
 
-			tutorialMove = false;
+			gameStart = false;
+			gameFinish = false;
+
+			tutorial = MOVE;
+
+			tutorialUI = {
+
+				kWindowWidth / 2, -128.0f,
+				kWindowWidth / 2, -128.0f,
+				kWindowWidth / 2, 250.0f,
+				0, 170,
+				0, 170,
+				1280, 170,
+				0.0f,
+				0.0f
+
+			};
+
+			tutorialImageUI = {
+
+				kWindowWidth / 2, -360.0f,
+				kWindowWidth / 2, -360.0f,
+				kWindowWidth / 2, kWindowHeight / 1.75f,
+				0, 720,
+				0, 720,
+				1280, 720,
+				0.0f,
+				0.0f
+
+			};
+
+			tutorialStart = false;
+			tutorialFinish = false;
+
+			nextTutorial = false;
 
 			gameStart = false;
 			gameFinish = false;
+
+			activeTutorial = false;
+			onceActive = false;
+			endTutorialAnim = false;
+			isEndTutorialAnim = false;
+			activeTutorialGraph = 0;
+
+			tutorialFrame = 0;
+			tutorialImageRadius = 0;
+
+			activeTutorialTime = 10.0f;
+			defActiveTutorialTime = 10.0f;
 
 #pragma endregion
 			#pragma region スコア
@@ -3509,7 +3853,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 			}
 
-			energyAmount = 0;
+			energyAmount = 100;
 			maxEnergyAmount = 1000;
 
 			energyIconGraph = Novice::LoadTexture("./resources/graph/energy/EnergyIcon.png");
@@ -3615,8 +3959,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 				deadDecoyEffect[i].graphRadius = 128;
 			};
 
-
-
 #pragma endregion
 			#pragma region リザルト画面
 
@@ -3667,7 +4009,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 #pragma endregion
 
-			scene--;
+			blackout = true;
+
+			scene = GAME;
 
 #pragma endregion
 
@@ -3686,7 +4030,69 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		{
 		case TITLE:
 
+			#pragma region タイトル
 
+			Novice::DrawBox(
+
+				0, 0,
+				kWindowWidth, kWindowHeight,
+				0.0f,
+				BLACK,
+				kFillModeSolid
+
+			);
+
+			Novice::DrawQuad(
+
+				title[0].translate.x - title[0].radius.x,
+				title[0].translate.y - title[0].radius.y,
+
+				title[0].translate.x + title[0].radius.x,
+				title[0].translate.y - title[0].radius.y,
+
+				title[0].translate.x - title[0].radius.x,
+				title[0].translate.y + title[0].radius.y,
+
+				title[0].translate.x + title[0].radius.x,
+				title[0].translate.y + title[0].radius.y,
+
+				title[0].drawStartArea.x,
+				title[0].drawStartArea.y,
+
+				title[0].drawEndArea.x,
+				title[0].drawEndArea.y,
+
+				title[titleCount].name,
+				WHITE
+
+			);
+
+			Novice::DrawQuad(
+
+				spaceGH.translate.x - spaceGH.radius.x,
+				spaceGH.translate.y - spaceGH.radius.y,
+
+				spaceGH.translate.x + spaceGH.radius.x,
+				spaceGH.translate.y - spaceGH.radius.y,
+
+				spaceGH.translate.x - spaceGH.radius.x,
+				spaceGH.translate.y + spaceGH.radius.y,
+
+				spaceGH.translate.x + spaceGH.radius.x,
+				spaceGH.translate.y + spaceGH.radius.y,
+
+				spaceGH.drawStartArea.x,
+				spaceGH.drawStartArea.y,
+
+				spaceGH.drawEndArea.x,
+				spaceGH.drawEndArea.y,
+
+				spaceGH.name,
+				0xFFFFFF00 + spaceCarentAlpha
+
+			);
+
+#pragma endregion
 
 			break;
 		case GAME:
@@ -3824,6 +4230,107 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 #pragma endregion
 
 			#pragma region タイマー処理
+
+			Novice::DrawQuad(
+
+				worldPosOrigin.x + secondsTimerPosOrigin.x - 64 / 2 - scrool.x - 100,
+				worldPosOrigin.y - secondsTimerPosOrigin.y - 64 / 2 + scrool.y - 100,
+
+				worldPosOrigin.x + secondsTimerPosOrigin.x + 64 / 2 - scrool.x - 100,
+				worldPosOrigin.y - secondsTimerPosOrigin.y - 64 / 2 + scrool.y - 100,
+
+				worldPosOrigin.x + secondsTimerPosOrigin.x - 64 / 2 - scrool.x - 100,
+				worldPosOrigin.y - secondsTimerPosOrigin.y + 64 / 2 + scrool.y - 100,
+
+				worldPosOrigin.x + secondsTimerPosOrigin.x + 64 / 2 - scrool.x - 100,
+				worldPosOrigin.y - secondsTimerPosOrigin.y + 64 / 2 + scrool.y - 100,
+
+				0,
+				0,
+
+				256,
+				256,
+
+				clockGraph,
+				WHITE
+
+			);
+
+			Novice::DrawQuad(
+
+				worldPosOrigin.x + secondsTimerPosOrigin.x - 384 / 2 - scrool.x - 650,
+				worldPosOrigin.y - secondsTimerPosOrigin.y - 384 / 2 + scrool.y - 300,
+
+				worldPosOrigin.x + secondsTimerPosOrigin.x + 384 / 2 - scrool.x - 650,
+				worldPosOrigin.y - secondsTimerPosOrigin.y - 384 / 2 + scrool.y - 300,
+
+				worldPosOrigin.x + secondsTimerPosOrigin.x - 384 / 2 - scrool.x - 650,
+				worldPosOrigin.y - secondsTimerPosOrigin.y + 384 / 2 + scrool.y - 300,
+
+				worldPosOrigin.x + secondsTimerPosOrigin.x + 384 / 2 - scrool.x - 650,
+				worldPosOrigin.y - secondsTimerPosOrigin.y + 384 / 2 + scrool.y - 300,
+
+				0,
+				0,
+
+				512,
+				512,
+
+				directionUIGraph,
+				WHITE
+
+			);
+
+			Novice::DrawQuad(
+
+				worldPosOrigin.x + secondsTimerPosOrigin.x - 256 / 2 - scrool.x - 764,
+				worldPosOrigin.y - secondsTimerPosOrigin.y - 256 / 2 + scrool.y ,
+
+				worldPosOrigin.x + secondsTimerPosOrigin.x + 256 / 2 - scrool.x - 764,
+				worldPosOrigin.y - secondsTimerPosOrigin.y - 256 / 2 + scrool.y ,
+
+				worldPosOrigin.x + secondsTimerPosOrigin.x - 256 / 2 - scrool.x - 764,
+				worldPosOrigin.y - secondsTimerPosOrigin.y + 256 / 2 + scrool.y,
+
+				worldPosOrigin.x + secondsTimerPosOrigin.x + 256 / 2 - scrool.x - 764,
+				worldPosOrigin.y - secondsTimerPosOrigin.y + 256 / 2 + scrool.y,
+
+				0,
+				0,
+
+				256,
+				256,
+
+				PutDecoyUIGraph,
+				WHITE
+
+			);
+
+			Novice::DrawQuad(
+
+				worldPosOrigin.x + secondsTimerPosOrigin.x - 256 / 2 - scrool.x - 500,
+				worldPosOrigin.y - secondsTimerPosOrigin.y - 256 / 2 + scrool.y,
+
+				worldPosOrigin.x + secondsTimerPosOrigin.x + 256 / 2 - scrool.x - 500,
+				worldPosOrigin.y - secondsTimerPosOrigin.y - 256 / 2 + scrool.y,
+
+				worldPosOrigin.x + secondsTimerPosOrigin.x - 256 / 2 - scrool.x - 500,
+				worldPosOrigin.y - secondsTimerPosOrigin.y + 256 / 2 + scrool.y,
+
+				worldPosOrigin.x + secondsTimerPosOrigin.x + 256 / 2 - scrool.x - 500,
+				worldPosOrigin.y - secondsTimerPosOrigin.y + 256 / 2 + scrool.y,
+
+				0,
+				0,
+
+				256,
+				256,
+
+				AttackUIGraph,
+				WHITE
+
+			);
+
 			for (int i = 0; i <= 1; i++) {
 				Novice::DrawQuad(
 
@@ -4526,6 +5033,31 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 				Novice::DrawQuad(
 
+					worldPosOrigin.x + secondsTimerPosOrigin.x - 640 / 2 - scrool.x + 650,
+					worldPosOrigin.y - secondsTimerPosOrigin.y - 128 / 2 + scrool.y + 10,
+
+					worldPosOrigin.x + secondsTimerPosOrigin.x + 640 / 2 - scrool.x + 650,
+					worldPosOrigin.y - secondsTimerPosOrigin.y - 128 / 2 + scrool.y + 10,
+
+					worldPosOrigin.x + secondsTimerPosOrigin.x - 640 / 2 - scrool.x + 650,
+					worldPosOrigin.y - secondsTimerPosOrigin.y + 128 / 2 + scrool.y + 10,
+
+					worldPosOrigin.x + secondsTimerPosOrigin.x + 640 / 2 - scrool.x + 650,
+					worldPosOrigin.y - secondsTimerPosOrigin.y + 128 / 2 + scrool.y + 10,
+
+					0,
+					0,
+
+					1280,
+					256,
+
+					resultUIGraph,
+					WHITE
+
+				);
+
+				Novice::DrawQuad(
+
 					worldPosOrigin.x + resultUI.translate.x - resultUI.radius.x / 2,
 					worldPosOrigin.y - resultUI.translate.y - resultUI.radius.y / 2,
 
@@ -4545,6 +5077,31 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 					resultUI.radius.y,
 
 					resultGraph,
+					WHITE
+
+				);
+
+				Novice::DrawQuad(
+
+					worldPosOrigin.x + scoreUI.translate.x - 512 / 2 - (scoreUI.radius.x * 1.5f),
+					worldPosOrigin.y - scoreUI.translate.y - 128 / 2 + 20,
+
+					worldPosOrigin.x + scoreUI.translate.x + 512 / 2 - (scoreUI.radius.x * 1.5f),
+					worldPosOrigin.y - scoreUI.translate.y - 128 / 2 + 20,
+
+					worldPosOrigin.x + scoreUI.translate.x - 512 / 2 - (scoreUI.radius.x * 1.5f),
+					worldPosOrigin.y - scoreUI.translate.y + 128 / 2 + 20,
+
+					worldPosOrigin.x + scoreUI.translate.x + 512 / 2 - (scoreUI.radius.x * 1.5f),
+					worldPosOrigin.y - scoreUI.translate.y + 128 / 2 + 20,
+
+					0,
+					0,
+
+					512,
+					128,
+
+					scoreGraph,
 					WHITE
 
 				);
@@ -4575,6 +5132,31 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 					);
 				}
+
+				Novice::DrawQuad(
+
+					worldPosOrigin.x + killUI.translate.x - 512 / 2 - (scoreUI.radius.x * 3.25f),
+					worldPosOrigin.y - killUI.translate.y - 128 / 2 + 20,
+
+					worldPosOrigin.x + killUI.translate.x + 512 / 2 - (scoreUI.radius.x * 3.25f),
+					worldPosOrigin.y - killUI.translate.y - 128 / 2 + 20,
+
+					worldPosOrigin.x + killUI.translate.x - 512 / 2 - (scoreUI.radius.x * 3.25f),
+					worldPosOrigin.y - killUI.translate.y + 128 / 2 + 20,
+
+					worldPosOrigin.x + killUI.translate.x + 512 / 2 - (scoreUI.radius.x * 3.25f),
+					worldPosOrigin.y - killUI.translate.y + 128 / 2 + 20,
+
+					0,
+					0,
+
+					512,
+					128,
+
+					enemyResultGraph,
+					WHITE
+
+				);
 
 				for (int i = 0; i < 4; i++) {
 					Novice::DrawQuad(
@@ -4613,6 +5195,31 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 				Novice::DrawQuad(
 
+					worldPosOrigin.x + tutorialImageUI.translate.x - tutorialImageUI.radius.x / 2,
+					worldPosOrigin.y - tutorialImageUI.translate.y - tutorialImageUI.radius.y / 2,
+
+					worldPosOrigin.x + tutorialImageUI.translate.x + tutorialImageUI.radius.x / 2,
+					worldPosOrigin.y - tutorialImageUI.translate.y - tutorialImageUI.radius.y / 2,
+
+					worldPosOrigin.x + tutorialImageUI.translate.x - tutorialImageUI.radius.x / 2,
+					worldPosOrigin.y - tutorialImageUI.translate.y + tutorialImageUI.radius.y / 2,
+
+					worldPosOrigin.x + tutorialImageUI.translate.x + tutorialImageUI.radius.x / 2,
+					worldPosOrigin.y - tutorialImageUI.translate.y + tutorialImageUI.radius.y / 2,
+
+					1280 * tutorialImageRadius,
+					0,
+
+					1280,
+					720,
+
+					tutorialImageGraph[tutorial],
+					0xFFFFFF00 + currentAlpha
+
+				);
+
+				Novice::DrawQuad(
+
 					worldPosOrigin.x + tutorialUI.translate.x - tutorialUI.radius.x / 2,
 					worldPosOrigin.y - tutorialUI.translate.y - tutorialUI.radius.y / 2,
 
@@ -4628,10 +5235,39 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 					0,
 					0,
 
-					tutorialUI.radius.x,
-					tutorialUI.radius.y,
+					1920,
+					256,
 
 					tutorialGraph[tutorial],
+					0xFFFFFF00 + currentAlpha
+
+				);
+
+			}
+
+			if (tutorialStart == true && gameStart == false) {
+
+				Novice::DrawQuad(
+
+					worldPosOrigin.x + secondsTimerPosOrigin.x - 640 / 2 - scrool.x + 650,
+					worldPosOrigin.y - secondsTimerPosOrigin.y - 128 / 2 + scrool.y + 10,
+
+					worldPosOrigin.x + secondsTimerPosOrigin.x + 640 / 2 - scrool.x + 650,
+					worldPosOrigin.y - secondsTimerPosOrigin.y - 128 / 2 + scrool.y + 10,
+
+					worldPosOrigin.x + secondsTimerPosOrigin.x - 640 / 2 - scrool.x + 650,
+					worldPosOrigin.y - secondsTimerPosOrigin.y + 128 / 2 + scrool.y + 10,
+
+					worldPosOrigin.x + secondsTimerPosOrigin.x + 640 / 2 - scrool.x + 650,
+					worldPosOrigin.y - secondsTimerPosOrigin.y + 128 / 2 + scrool.y + 10,
+
+					0,
+					0,
+
+					1280,
+					256,
+
+					tutorialUIGraph,
 					WHITE
 
 				);
@@ -4664,19 +5300,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		);
 
 		#pragma endregion
-
-#pragma region Debug描画
-
-		/******** プレイヤーデバック描画 **********/
-		Novice::ScreenPrintf(0, 10, "killCount : %d", tutorial);
-		Novice::ScreenPrintf(0, 30, "killCount : %d", nextTutorial);
-		Novice::ScreenPrintf(0, 50, "killCount : %d", isEndTutorialAnim);
-		Novice::ScreenPrintf(0, 70, "killCount : %d", activeTutorial);
-		Novice::ScreenPrintf(0, 90, "killCount : %d", onceActive);
-		Novice::ScreenPrintf(0, 110, "killCount : %4.2f", tutorialUI.time);
-		Novice::ScreenPrintf(0, 130, "killCount : %d", activeTutorialTime);
-
-#pragma endregion
 
 		/*********************************
 			描画処理ここまで
